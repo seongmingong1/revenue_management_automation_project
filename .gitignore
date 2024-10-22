@@ -1,0 +1,9 @@
+proenv/
+
+.env
+
+.vscode/
+.DS_Store
+__pycache__
+.log
+graceful-byway-438720-f4-96575e4be360.json
