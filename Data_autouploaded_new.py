@@ -29,7 +29,7 @@ def connect_to_db():
         print(f"Error: {e}")
         return None
 
-#Mysql connection 
+
 def get_latest_file(folder_path):
     files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx')]
     if not files:
@@ -39,13 +39,13 @@ def get_latest_file(folder_path):
     return os.path.join(folder_path, latest_file)
 
 def upload_mysql(file_path):
-    connection = connect_to_db
+    connection = connect_to_db()
     if connection is None: 
         print("failed")
         return
     
-    df =pd.read_excel(file_path)
-    cursor = connection.cursor() #cursor
+    df = pd.read_excel(file_path)
+    cursor = connection.cursor()
 
     for _, row in df.iterrows():
         lesson_date = pd.to_datetime(row['lesson_date']).strftime('%Y-%m-%d')
@@ -63,7 +63,6 @@ def upload_mysql(file_path):
     connection.commit()
     print(f"Data form {file_path} inserted into MySQL table")
     connection.close()
-
 
 
 def calculate_daily_revenue(ti):
@@ -108,7 +107,7 @@ def calculate_daily_revenue(ti):
 
 
 def calculate_weekly_revenue(ti):
-    daily_revenue= ti.xcom_pull(key='daily_revenue', task_ids='task_2')
+    daily_revenue= ti.xcom_pull(key='daily_revenue', task_ids='calculate_daily_revenue')
     daily_revenue = daily_revenue.reset_index()
     daily_revenue['lesson_date'] = pd.to_datetime(daily_revenue['lesson_date'])
 
@@ -117,7 +116,7 @@ def calculate_weekly_revenue(ti):
     ti.xcom_push(key='weekly_revenue', value=weekly_revenue)
 
 def calculate_montly_revenue(ti):
-    daily_revenue= ti.xcom_pull(key='daily_revenue', task_ids='task_2')
+    daily_revenue= ti.xcom_pull(key='daily_revenue', task_ids='calculate_daily_revenue')
     daily_revenue = daily_revenue.reset_index()
     daily_revenue['lesson_date'] = pd.to_datetime(daily_revenue['lesson_date'])
 
@@ -130,9 +129,9 @@ def calculate_montly_revenue(ti):
     ti.xcom_push(key='monthly_revenue', value=monthly_revenue)
 
 def save_to_csv(ti):
-    daily_revenue = ti.xcom_pull(key='daily_revenue', task_ids='task_2')
-    weekly_revenue = ti.xcom_pull(key='weekly_revenue', task_ids='task_3')
-    monthly_revenue = ti.xcom_pull(key='monthly_revenue', task_ids='task_4')
+    daily_revenue = ti.xcom_pull(key='daily_revenue', task_ids='calculate_daily_revenue')
+    weekly_revenue = ti.xcom_pull(key='weekly_revenue', task_ids='calculate_weekly_revenue')
+    monthly_revenue = ti.xcom_pull(key='monthly_revenue', task_ids='calculate_montly_revenue')
 
     daily_revenue.to_csv('daily_revenue.csv', index=False)
     weekly_revenue.to_csv('weekly_revenue.csv', index=False)
